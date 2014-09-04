@@ -46,7 +46,7 @@ coreos:
           ConditionFileIsExecutable=!/opt/bin/rudder
 
           [Service]
-          ExecStart=/usr/bin/docker run --rm -v /opt/bin:/opt/bin aputs/rudder
+          ExecStart=/usr/bin/docker run --rm -v /opt/bin:/opt/bin aputs/builder-rudder
           RemainAfterExit=yes
           Type=oneshot
     - name: rudder.service
