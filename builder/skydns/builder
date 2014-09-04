@@ -1,0 +1,4 @@
+#!/bin/sh
+
+go get -d github.com/skynetservices/skydns
+go build -o /opt/bin/skydns github.com/skynetservices/skydns
