@@ -1,0 +1,79 @@
+#cloud-config
+
+hostname: [hostname]
+
+coreos:
+  etcd:
+    name: [hostname]
+    discovery: [etcd_discovery_url]
+    peer-heartbeat-interval: 250
+    peer-election-timeout: 1000
+    addr: [etcd_addr]
+    peer-addr: [etcd_peer_addr]
+  units:
+    - name: 20-static.network
+      content: |
+        [Match]
+        Name=eth0
+
+        [Network]
+        DHCP=none
+        Address=[address]
+        Gateway=[gateway]
+        Domains=[domain]
+        DNS=[dns]
+    - name: settimezone.service
+      command: start
+      content: |
+        [Unit]
+        Description=Set the timezone
+
+        [Service]
+        ExecStart=/usr/bin/timedatectl set-timezone [timezone]
+        RemainAfterExit=yes
+        Type=oneshot
+    - name: etcd.service
+      command: start
+    - name: fleet.service
+      command: start
+    - name: download-rudder.service
+      command: start
+      content: |
+          [Unit]
+          After=network-online.target
+          Before=rudder.service
+          Requires=network-online.target
+          ConditionFileIsExecutable=!/opt/bin/rudder
+
+          [Service]
+          ExecStart=/usr/bin/docker run --rm -v /opt/bin:/opt/bin aputs/rudder
+          RemainAfterExit=yes
+          Type=oneshot
+    - name: rudder.service
+      command: start
+      content: |
+          [Unit]
+          Requires=etcd.service
+          After=etcd.service
+          After=download-rudder.service
+          ConditionFileIsExecutable=/opt/bin/rudder
+          Description=Rudder is an etcd backed overlay network for containers
+          Wants=etcd.service
+          Wants=download-rudder.service
+
+          [Service]
+          ExecStartPre=-/usr/bin/etcdctl mk /coreos.com/network/config '{"Network":"10.0.0.0/16"}'
+          ExecStart=/opt/bin/rudder
+
+write_files:
+  - path: /etc/fleet/fleet.conf
+    owner: root:root
+    content: |
+      metadata="name=[hostname],k8s=master"
+
+users:
+  - name: core
+    passwd: [password_hash]
+
+ssh_authorized_keys:
+  - [initial_authorized_keys]
