@@ -1,0 +1,4 @@
+#!/bin/sh
+
+go get -d github.com/coreos/rudder
+go build -o /opt/bin/rudder github.com/coreos/rudder
