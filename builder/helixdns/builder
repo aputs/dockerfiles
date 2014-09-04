@@ -1,0 +1,4 @@
+#!/bin/sh
+
+go get -d github.com/mrwilson/helixdns
+go build -o /opt/bin/hdns github.com/mrwilson/helixdns
